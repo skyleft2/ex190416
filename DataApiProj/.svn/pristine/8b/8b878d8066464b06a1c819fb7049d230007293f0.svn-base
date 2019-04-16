@@ -1,0 +1,53 @@
+# !!! NOTE !!!!
+#-------------------------------------------------------------------------------
+# This file and DataApiProj.jar must put in the SAME PATH.
+# ------------------------------------------------------------------------------
+
+#--------- DB INFO
+# // ORACLE
+DBClass=oracle.jdbc.driver.OracleDriver
+DBLinkPreStr=jdbc:oracle:thin:@
+
+#roaddata
+#real
+
+#dev
+DBLink=192.168.0.8:1521/mhdevdb
+DBUserId=roaddata
+DBUserPw=roaddata
+
+#SPMS
+#real
+
+#dev
+SpmsDBLink=192.168.0.8:1521/mhdevdb
+SpmsDBUserId=spms2015
+SpmsDBUserPw=spms2015
+
+
+#--------- KEY
+#\uacf5\uacf5\ub370\uc774\ud130\ud3ec\ud138 serviceKey
+#\uac1c\ubc1cKEY : wijy
+serviceKey=McP3uoFJg8t7YUOFBesZEhEKWa5lUQlEqT%2Bi0X0dmJaFvWGquMUkqpVQKkTnuF0jZ3InV%2BQiJhQHLAiCGLELyg%3D%3D
+#\ub3c4\ub85c\ub3cc\ubc1ckey : kjh
+roadOutbreakKey=4251535668776a643130317144747872
+#\uc2e4\uc0ac\uc6a9KEY
+#serviceKey=
+
+#--------- SHP BUILDER LOG
+#LOG FILE PATH
+#real 
+
+#dev
+LOG_PATH=D:/01.BD_180302/_TEST/LOG
+
+#--------- FTP 
+#real
+
+#dev
+ftpServerIp=192.168.0.205
+ftpServerPort=21
+ftpServerId=
+ftpServerPw=
+ftpRemotePath=/
+ftpFileDownPath=D:/files

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/lib"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="owner.project.facets" value="java"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="D:/sample2/workspace/DataApiProj/lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="D:/sample2/workspace/DataApiProj/lib/commons-net-3.0.1.jar"/>
+	<classpathentry kind="lib" path="D:/sample2/workspace/DataApiProj/lib/httpclient-4.1.1.jar"/>
+	<classpathentry kind="lib" path="D:/sample2/workspace/DataApiProj/lib/httpcore-4.1.jar"/>
+	<classpathentry kind="lib" path="D:/sample2/workspace/DataApiProj/lib/httpmime-4.1.1.jar"/>
+	<classpathentry kind="lib" path="D:/sample2/workspace/DataApiProj/lib/icu4j-4.8.jar"/>
+	<classpathentry kind="lib" path="D:/sample2/workspace/DataApiProj/lib/ini4j-0.5.4.jar"/>
+	<classpathentry kind="lib" path="D:/sample2/workspace/DataApiProj/lib/ini4j-0.5.4-jdk14.jar"/>
+	<classpathentry kind="lib" path="D:/sample2/workspace/DataApiProj/lib/mssql-jdbc-6.2.2.jre7.jar"/>
+	<classpathentry kind="lib" path="D:/sample2/workspace/DataApiProj/lib/ojdbc6_11.2.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -1,0 +1,79 @@
+package pms;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathFactory;
+
+import logging.Logging;
+import cmmn.Common;
+import db.IdxDAO;
+
+public class PotLocJob {
+	protected Common comm = Common.getInstance();
+	protected IdxDAO iDao = new IdxDAO();
+	protected XPath xpath = XPathFactory.newInstance().newXPath();
+	protected Logging logging = new Logging();
+	
+	String idx 		= "PMS_POTLOC";
+	String idxNm 	= "PMS-소파신고위치 입력";
+	
+	//예측모델 프로시저 실행
+	public void startProc() {
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.KOREA);
+		logging.initMap();
+		
+		//log param
+		logging.setMap("LINK_ID", idx);
+		logging.setMap("LINK_KO_NM", idxNm);
+		logging.setMap("SYS_CODE", "PMS");
+		logging.setMap("BEGIN_DT", formatter.format(new Date()));
+		
+		try{
+			String exesql = "{call ROADDATA.PRC_CREATE_POT_LOC(?,?,?,?)}";
+			
+			List<String> param = new ArrayList<String>();
+			param.add("999999");
+			param.add("NONE");
+			
+			int[] outParam = new int[2];
+			outParam[0] = java.sql.Types.VARCHAR;
+			outParam[1] = java.sql.Types.VARCHAR;
+			
+			Map<String,Object> result = iDao.executeMapPlSql(exesql, param, outParam);
+			String resultCd = result.get("OUTPUT_2") == null ? "" : result.get("OUTPUT_2").toString();
+			String resultMsg = result.get("OUTPUT_3") == null ? "" : result.get("OUTPUT_3").toString();
+			
+			if(result.get("SUCCESS_AT").toString().equals("Y") && resultCd.equals("true")){
+				logging.setMap("SUCCESS_YN", "Y");
+				//logging.setMap("RES_MSG", "[PMS/소파신고위치 입력 성공] : " + resultMsg);
+				logging.setMap("RES_MSG", "[nput Successful] : " + resultMsg);
+			}else{
+				logging.setMap("SUCCESS_YN", "N");
+				
+				//String errorMsg =  "[PMS/소파신고위치 입력 실패] : " + resultMsg;
+				String errorMsg =  "[Input Failed] : " + resultMsg;
+				
+				if(result.get("FAIL_MSG") != null){
+					errorMsg += result.get("FAIL_MSG").toString().substring(0, 400);
+				}
+				
+				logging.setMap("RES_MSG", errorMsg);
+			}
+		}catch(Exception e){
+			logging.setMap("SUCCESS_YN", "N");
+			//logging.setMap("RES_MSG", "[PMS/소파신고위치 입력 실패] : 소파보수 접수 위치 입력에 실패하였습니다. ");
+			logging.setMap("RES_MSG", "[Input Failed] : Failed to enter small wave repair reception position. ");
+			System.out.println("[EXCEPTION] : PotLocJob.startProc()  ");
+		}
+		
+		logging.setMap("END_DT", formatter.format(new Date()));
+		
+		logging.logging();
+	}
+}

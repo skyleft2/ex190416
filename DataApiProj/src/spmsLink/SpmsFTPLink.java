@@ -1,0 +1,326 @@
+package spmsLink;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Properties;
+
+import logging.Logging;
+
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPReply;
+import org.ini4j.Profile.Section;
+
+import cmmn.Common;
+
+/* SPMS에서 file을 읽어 저장하기 위한 Class */
+//180517 - wijy
+
+/**
+ * Reply Codes
+ *****************************************************************
+ * 200 Command okay.
+ * 500 Syntax error, command unrecognized.
+ *     This may include errors such as command line too long.
+ * 501 Syntax error in parameters or arguments.
+ * 202 Command not implemented, superfluous at this site.
+ * 502 Command not implemented.
+ * 503 Bad sequence of commands.
+ * 504 Command not implemented for that parameter.
+ * 110 Restart marker reply.
+ *     In this case, the text is exact and not left to the
+ *     particular implementation; it must read:
+ *          MARK yyyy = mmmm
+ *     Where yyyy is User-process data stream marker, and mmmm
+ *     server's equivalent marker (note the spaces between markers
+ *     and "=").
+ * 211 System status, or system help reply.
+ * 212 Directory status.
+ * 213 File status.
+ * 214 Help message.
+ *     On how to use the server or the meaning of a particular
+ *     non-standard command.  This reply is useful only to the
+ *     human user.
+ * 215 NAME system type.
+ *     Where NAME is an official system name from the list in the
+ *     Assigned Numbers document.
+ *
+ * 120 Service ready in nnn minutes.
+ * 220 Service ready for new user.
+ * 221 Service closing control connection.
+ *     Logged out if appropriate.
+ * 421 Service not available, closing control connection.
+ *     This may be a reply to any command if the service knows it
+ *     must shut down.
+ * 125 Data connection already open; transfer starting.
+ * 225 Data connection open; no transfer in progress.
+ * 425 Can't open data connection.
+ * 226 Closing data connection.
+ *     Requested file action successful (for example, file
+ *     transfer or file abort).
+ * 426 Connection closed; transfer aborted.
+ * 227 Entering Passive Mode (h1,h2,h3,h4,p1,p2).
+ *
+ * 230 User logged in, proceed.
+ * 530 Not logged in.
+ * 331 User name okay, need password.
+ * 332 Need account for login.
+ * 532 Need account for storing files.
+ */
+
+public class SpmsFTPLink {
+	protected Common comm = Common.getInstance();
+	Properties prop;
+	Properties server;
+	Logging logging;
+
+	private String serverMode = "";
+	private String sServerIp = "";
+	private String sPort = "";
+	private String sId = "";
+	private String sPw = "";
+
+	private String sRemoteDir = "";
+	private String sDownDir = "";
+	FTPClient ftpClient;
+
+	public SpmsFTPLink() {
+		ftpClient = new FTPClient();
+		prop = new Properties();
+		logging = new Logging();
+	}
+
+	//초기화
+	/**
+	 * PMS 첨부파일 DOWN
+	 * @return
+	 * @throws Exception
+	 */
+	public int init() throws Exception {
+		int retVal = 0;
+		String local = "";
+
+		// 접속한 서버가 운영서버,개발서버,로컬인지 확인한다.
+		System.out.println("==============================================");
+		System.out.println(">>>>>>>>>> SpmsFTPLink.java init ");
+		System.out.println("==============================================");
+/*
+		prop = comm.setProperitesFileLoad();
+
+		sServerIp = prop.getProperty("ftpServerIp");
+		sPort = prop.getProperty("ftpServerPort");
+		sId = prop.getProperty("ftpServerId");
+		if("".equals(sId)) sId = "anonymous";	//익명접속 ID
+
+		sPw = prop.getProperty("ftpServerPw");
+		sRemoteDir = prop.getProperty("ftpRemotePath");
+		if("".equals(sRemoteDir)) sRemoteDir = "/";
+
+		sDownDir = prop.getProperty("ftpFileDownPath");
+*/
+
+		Section section = (Section)comm.setIniFileLoad();
+		sServerIp = section.get("ftpServerIp");
+		sPort = section.get("ftpServerPort");
+		sId = section.get("ftpServerId");
+		if("".equals(sId)) sId = "anonymous";	//익명접속 ID
+
+		sPw = section.get("ftpServerPw");
+		sRemoteDir = section.get("ftpRemotePath");
+		if("".equals(sRemoteDir)){
+			sRemoteDir = "/";
+		}
+
+		sDownDir = section.get("ftpFileDownPath");
+
+		logging.initMap();
+		retVal = 1;
+
+		return retVal;
+	}
+
+	//초기화
+	/**
+	 * PMS ArcGis Shape File DOWN
+	 * @return
+	 * @throws Exception
+	 */
+	public int init2() throws Exception {
+		int retVal = 0;
+		String local = "";
+
+		// 접속한 서버가 운영서버,개발서버,로컬인지 확인한다.
+		System.out.println("==============================================");
+		System.out.println(">>>>>>>>>> Map Shape file init ");
+		System.out.println("==============================================");
+
+		Section section = (Section)comm.setIniFileLoad();
+		sServerIp = section.get("ftpServerIp2");
+		sPort = section.get("ftpServerPort2");
+		sId = section.get("ftpServerId2");
+		if("".equals(sId)) sId = "anonymous";	//익명접속 ID
+
+		sPw = section.get("ftpServerPw2");
+		sRemoteDir = section.get("ftpRemotePath2");
+		if("".equals(sRemoteDir)){
+			sRemoteDir = "/";
+		}
+
+		sDownDir = section.get("ftpFileDownPath2");
+
+		logging.initMap();
+		retVal = 1;
+
+		return retVal;
+	}
+
+
+	//FTP 파일 다운로드
+	public int downSpmsFiles() {
+		int retVal = 0;
+
+		try {
+			int nPort = Integer.parseInt(sPort);
+			ftpClient.connect(sServerIp, nPort);
+
+			int nReply = ftpClient.getReplyCode();
+
+			//Connect Check
+			if(!FTPReply.isPositiveCompletion(nReply)) {
+				System.out.println("--------- CONNECT FAIL ---------");
+				printFtpReply();
+
+				logging.setMap("SUCCESS_YN", "N");
+				logging.setMap("RES_MSG", "[ERR] CONNECT FAIL");
+				logging.logging();
+
+				ftpClient.disconnect();
+				return retVal;
+			}
+
+			//Login Check
+			if(!ftpClient.login(sId, sPw)) {
+				System.out.println("--------- LOGIN FAIL ---------");
+				printFtpReply();
+
+				logging.setMap("SUCCESS_YN", "N");
+				logging.setMap("RES_MSG", "[ERR] LOGIN FAIL");
+				logging.logging();
+
+				ftpClient.disconnect();
+				return retVal;
+			}
+			retVal = downloadFile(sRemoteDir);
+
+			ftpClient.logout();
+			ftpClient.disconnect();
+
+			logging.setMap("LINK_ID", "FTP_DOWN");
+			logging.setMap("LINK_KO_NM", "FTP파일 다운로드");
+			logging.setMap("SYS_CODE", "ROAD");
+			logging.setMap("SUCCESS_YN", "Y");
+			logging.setMap("RES_MSG", retVal + "건 다운로드 완료!");
+
+			logging.logging();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			logging.setMap("SUCCESS_YN", "N");
+			logging.setMap("RES_MSG", "[ERR] 오류 발생!");
+			logging.logging();
+
+		} finally {
+			if(ftpClient != null) try { ftpClient.disconnect(); } catch(Exception e) {};
+		}
+
+		return retVal;
+	}
+
+
+	/**
+	 * @description 해당 경로의 파일을 내려받는다.
+	 * @param0 (String) path - 디렉토리 경로
+	 */
+	public int downloadFile(String _sPath) {
+		int retVal = 0;
+		BufferedOutputStream bos = null;
+		FTPFile[] ftpFiles;
+
+		try {
+			ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+			ftpClient.setFileTransferMode(FTP.STREAM_TRANSFER_MODE);
+
+			ftpFiles = ftpClient.listFiles(_sPath);
+
+			//폴더구조 생성
+			File dir = new File(sDownDir + _sPath);
+			if(!dir.exists()) dir.mkdirs();
+
+			System.out.println(">>>>>>>>>> down folder: " + sDownDir + _sPath);
+			//파일 다운로드
+			for(FTPFile f : ftpFiles) {
+				String sThisName = _sPath + ("/".equals(_sPath)?"":"/") + f.getName();
+				System.out.println(">>>>>>>>>> " + sThisName);
+				if(f.isDirectory()) {
+					//폴더인 경우 하위폴더로 이동
+					retVal += downloadFile(sThisName);
+				} else {
+					//파일 내려받기
+					File file = new File(sDownDir + sThisName);
+					//중복파일 체크 안하는 부분이 필요할지 모르겠음.
+					//만약 중복파일은 다운로드 하지 않게 할거면 아래 if 주석풀고 수정할 것
+					//if(!file.exists()) {}
+
+					bos = new BufferedOutputStream(new FileOutputStream(file));
+					boolean bIsSuccess = ftpClient.retrieveFile(sThisName, bos);
+
+					if(bIsSuccess) {
+						retVal++;
+					}
+					else {
+						//다운로드 실패
+						logging.setMap("SUCCESS_YN", "N");
+						logging.setMap("RES_MSG", "[ERR] 다운로드 실패 : " + f.getName());
+						logging.logging();
+
+						throw new Exception("---> 다운로드 실패 : [" + f.getName() + "]");
+					}
+
+					bos.close();
+				}
+			}
+		}  catch (Exception e) {
+			e.printStackTrace();
+
+			logging.setMap("SUCCESS_YN", "N");
+			logging.setMap("RES_MSG", "[ERR] 에러 발생!");
+			logging.logging();
+		} finally {
+			//close
+			if(bos != null) try { bos.close(); } catch (Exception e) {}
+		}
+
+		return retVal;
+	}
+
+	//reply코드 확인용 함수
+	private void printFtpReply() {
+		System.out.println("==============================================================");
+		System.out.println("");
+		System.out.println("-------> [REPLY CODE] : " + ftpClient.getReplyCode());
+		System.out.println("-------> [REPLY STR] : " + ftpClient.getReplyString());
+		System.out.println("==============================================================");
+	}
+
+}
